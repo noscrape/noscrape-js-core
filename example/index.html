@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Noscrape Demo</title>
+</head>
+<body>
+
+<p data-noscrape>
+    hello@example.com
+</p>
+
+<p data-noscrape>
+    +49 170 123456
+</p>
+
+<script type="module">
+
+    import {Noscrape} from '../dist/index.js';
+
+    const noscrape = new Noscrape({
+        debug: true,
+    });
+
+    noscrape.render().catch(console.error);
+
+</script>
+
+</body>
+</html>

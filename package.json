@@ -1,0 +1,44 @@
+{
+  "name": "@noscrape/js",
+  "version": "0.1.0",
+  "description": "Framework-agnostic JavaScript SDK for Noscrape.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "noscrape",
+    "obfuscation",
+    "privacy",
+    "anti-scraping"
+  ],
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.9",
+    "jsdom": "^29.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.1.3",
+    "vitest": "^4.1.9"
+  }
+}
