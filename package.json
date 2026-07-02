@@ -1,9 +1,26 @@
 {
   "name": "@noscrape/js",
   "version": "0.1.0",
-  "description": "Framework-agnostic JavaScript SDK for Noscrape.",
+  "description": "Official framework-agnostic JavaScript SDK for Noscrape. Protect email addresses, phone numbers and other sensitive text from bots while remaining fully readable for humans.",
   "license": "MIT",
+  "author": {
+    "name": "Bernhard Schönberger",
+    "url": "https://noscrape.eu"
+  },
+  "homepage": "https://noscrape.eu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noscrape/noscrape-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/noscrape/noscrape-js/issues"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://noscrape.eu"
+  },
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,14 +42,26 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
   },
   "keywords": [
     "noscrape",
-    "obfuscation",
+    "anti-scraping",
+    "scraping",
+    "bot-protection",
+    "email-protection",
+    "email-obfuscation",
+    "phone-obfuscation",
     "privacy",
-    "anti-scraping"
+    "javascript",
+    "typescript",
+    "browser",
+    "frontend"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
     "jsdom": "^29.1.1",
