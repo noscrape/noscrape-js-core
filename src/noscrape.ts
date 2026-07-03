@@ -1,25 +1,19 @@
 import type {
     NoscrapeApiRequest,
+    NoscrapeApiResponse,
     NoscrapeConfig,
     NoscrapeOptions,
-    NoscrapeRenderOptions,
 } from './types';
 import { NoscrapeClient } from './client';
-import { PendingScanner } from './pending-scanner';
-import { FontManager } from './font-manager';
-import { Renderer } from './renderer';
 
 export class Noscrape {
     private readonly options: NoscrapeConfig;
-    private readonly scanner = new PendingScanner();
-    private readonly renderer = new Renderer();
-    private readonly fontManager = new FontManager();
+    private readonly client: NoscrapeClient;
 
     public constructor(options: NoscrapeOptions = {}) {
         this.options = {
             endpoint: options.endpoint ?? this.endpointFromHost(options.host),
             ignoreWhitespace: options.ignoreWhitespace ?? true,
-            selector: options.selector ?? '[data-noscrape]',
             cache: options.cache ?? true,
             debug: options.debug ?? false,
         };
@@ -35,57 +29,30 @@ export class Noscrape {
         if (options.font !== undefined) {
             this.options.font = options.font;
         }
+
+        this.client = new NoscrapeClient(
+            this.options.endpoint,
+            this.options.apiKey,
+        );
     }
 
-    public async render(options: NoscrapeRenderOptions = {}): Promise<void> {
-        const root = options.root ?? document;
-
-        const elements = Array.from(
-            root.querySelectorAll<HTMLElement>(this.options.selector),
-        );
-
-        if (this.options.debug) {
-            console.debug('[Noscrape] options', options);
-            console.debug('[Noscrape] elements found', elements.length);
-        }
-
-        if (elements.length === 0) {
-            return;
-        }
-
-        const pending = this.scanner.scan(elements);
-
-        if (pending.length === 0) {
-            return;
-        }
-
+    public async obfuscate(
+        items: Record<string, string>,
+    ): Promise<NoscrapeApiResponse> {
         const request: NoscrapeApiRequest = {
-            items: {},
+            items,
             ignoreWhitespace: this.options.ignoreWhitespace,
         };
-
-        for (const item of pending) {
-            request.items[item.id] = item.value;
-        }
 
         if (this.options.font !== undefined) {
             request.font = this.options.font;
         }
 
-        const client = new NoscrapeClient(
-            this.options.endpoint,
-            this.options.apiKey,
-        );
+        if (this.options.debug) {
+            console.debug('[Noscrape] request', request);
+        }
 
-        const response = await client.obfuscate(request);
-
-        const font = await this.fontManager.load(response);
-
-        this.renderer.render(
-            pending,
-            response.data.items,
-            font.family,
-        );
+        return await this.client.obfuscate(request);
     }
 
     private endpointFromHost(host?: string): string {

@@ -1,149 +1,54 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Noscrape } from '../src';
 
 describe('Noscrape', () => {
-    beforeEach(() => {
-        vi.stubGlobal('crypto', {
-            randomUUID: vi
-                .fn()
-                .mockReturnValueOnce('id-1')
-                .mockReturnValueOnce('id-2')
-                .mockReturnValueOnce('id-3')
-                .mockReturnValueOnce('id-4'),
-        });
-    });
-
     afterEach(() => {
-        vi.unstubAllGlobals();
         vi.restoreAllMocks();
-        document.body.innerHTML = '';
+        vi.unstubAllGlobals();
     });
 
     it('creates an instance', () => {
         expect(new Noscrape()).toBeInstanceOf(Noscrape);
     });
 
-    it('finds noscrape elements', async () => {
-        document.body.innerHTML = `
-            <span data-noscrape>hello@example.com</span>
-            <span data-noscrape>0123456789</span>
-            <span>normal text</span>
-        `;
-
-        vi.stubGlobal(
-            'fetch',
-            vi.fn().mockResolvedValue({
-                ok: true,
-                json: async () => ({
-                    data: {
-                        ignoreWhitespace: true,
-                        items: {
-                            'id-1': 'AAA',
-                            'id-2': 'BBB',
-                        },
-                    },
-                    font: '',
-                    format: 'otf',
-                }),
-            }),
-        );
-
-        const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
-
-        await new Noscrape({
-            debug: true,
-        }).render();
-
-        expect(debug).toHaveBeenCalledWith(
-            '[Noscrape] elements found',
-            2,
-        );
-    });
-
-    it('uses a custom selector', async () => {
-        document.body.innerHTML = `
-            <span class="secret">A</span>
-            <span class="secret">B</span>
-        `;
-
-        vi.stubGlobal(
-            'fetch',
-            vi.fn().mockResolvedValue({
-                ok: true,
-                json: async () => ({
-                    data: {
-                        ignoreWhitespace: true,
-                        items: {
-                            'id-1': 'A',
-                            'id-2': 'B',
-                        },
-                    },
-                    font: '',
-                    format: 'otf',
-                }),
-            }),
-        );
-
-        const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
-
-        await new Noscrape({
-            selector: '.secret',
-            debug: true,
-        }).render();
-
-        expect(debug).toHaveBeenCalledWith(
-            '[Noscrape] elements found',
-            2,
-        );
-    });
-
-    it('batches all elements into a single request', async () => {
-        document.body.innerHTML = `
-            <span data-noscrape>a</span>
-            <span data-noscrape>b</span>
-            <span data-noscrape>c</span>
-        `;
-
+    it('sends an obfuscation request', async () => {
         const fetchMock = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
                 data: {
                     ignoreWhitespace: true,
                     items: {
-                        'id-1': 'A',
-                        'id-2': 'B',
-                        'id-3': 'C',
+                        email: 'AAA',
+                        phone: 'BBB',
                     },
                 },
-                font: '',
+                font: 'FONT',
                 format: 'otf',
             }),
         });
 
         vi.stubGlobal('fetch', fetchMock);
 
-        await new Noscrape().render();
+        const noscrape = new Noscrape();
+
+        const response = await noscrape.obfuscate({
+            email: 'hello@example.com',
+            phone: '0123456789',
+        });
 
         expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        expect(response.data.items.email).toBe('AAA');
+        expect(response.data.items.phone).toBe('BBB');
     });
 
-    it('deduplicates strings before sending them to the API', async () => {
-        document.body.innerHTML = `
-            <span data-noscrape>hello@example.com</span>
-            <span data-noscrape>hello@example.com</span>
-            <span data-noscrape>0123456789</span>
-            <span data-noscrape>0123456789</span>
-        `;
-
+    it('passes the api key', async () => {
         const fetchMock = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
                 data: {
                     ignoreWhitespace: true,
-                    items: {
-                        'id-1': 'AAA',
-                        'id-2': 'BBB',
-                    },
+                    items: {},
                 },
                 font: '',
                 format: 'otf',
@@ -152,32 +57,29 @@ describe('Noscrape', () => {
 
         vi.stubGlobal('fetch', fetchMock);
 
-        await new Noscrape().render();
+        const noscrape = new Noscrape({
+            apiKey: 'secret',
+        });
+
+        await noscrape.obfuscate({
+            email: 'hello@example.com',
+        });
 
         // @ts-ignore
         const [, options] = fetchMock.mock.calls[0];
-        const request = JSON.parse((options as RequestInit).body as string);
 
-        expect(request.items).toEqual({
-            'id-1': 'hello@example.com',
-            'id-2': '0123456789',
+        expect((options as RequestInit).headers).toMatchObject({
+            Authorization: 'Bearer secret',
         });
     });
 
-    it('renders all matching elements', async () => {
-        document.body.innerHTML = `
-            <span data-noscrape>hello@example.com</span>
-            <span data-noscrape>hello@example.com</span>
-        `;
-
+    it('sends object payloads unchanged', async () => {
         const fetchMock = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
                 data: {
                     ignoreWhitespace: true,
-                    items: {
-                        'id-1': '<span class="noscrape">encrypted</span>',
-                    },
+                    items: {},
                 },
                 font: '',
                 format: 'otf',
@@ -186,8 +88,56 @@ describe('Noscrape', () => {
 
         vi.stubGlobal('fetch', fetchMock);
 
-        await new Noscrape().render();
+        const noscrape = new Noscrape();
 
-        expect(document.querySelectorAll('.noscrape')).toHaveLength(2);
+        await noscrape.obfuscate({
+            email: 'hello@example.com',
+            phone: '0123456789',
+        });
+
+        const [, options] = fetchMock.mock.calls[0];
+
+        const request = JSON.parse(
+            (options as RequestInit).body as string,
+        );
+
+        expect(request.items).toEqual({
+            email: 'hello@example.com',
+            phone: '0123456789',
+        });
+    });
+
+    it('returns the api response', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    data: {
+                        ignoreWhitespace: true,
+                        items: {
+                            email: 'encrypted',
+                        },
+                    },
+                    font: 'FONTDATA',
+                    format: 'otf',
+                }),
+            }),
+        );
+
+        const response = await new Noscrape().obfuscate({
+            email: 'hello@example.com',
+        });
+
+        expect(response).toEqual({
+            data: {
+                ignoreWhitespace: true,
+                items: {
+                    email: 'encrypted',
+                },
+            },
+            font: 'FONTDATA',
+            format: 'otf',
+        });
     });
 });

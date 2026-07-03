@@ -2,19 +2,18 @@
 
 Official JavaScript SDK for Noscrape.
 
-Protect email addresses, phone numbers and other sensitive text from bots while keeping them fully readable for real users.
+Protect email addresses, phone numbers and other sensitive text from bots by obfuscating them **before** your HTML is sent to the browser.
+
+This SDK is designed for server-side environments such as Node.js, server-side rendering (SSR) frameworks and custom backend integrations.
 
 ## Features
 
 - Framework agnostic
-- Automatic DOM scanning
-- Single API request per page
-- Duplicate detection
-- Automatic font loading
+- Server-side obfuscation
 - TypeScript support
 - ESM and CommonJS
 - Lightweight
-- Zero dependencies
+- Zero runtime dependencies
 
 ---
 
@@ -28,29 +27,35 @@ npm install @noscrape/js
 
 ## Basic Usage
 
-HTML
-
-```html
-<span data-noscrape>
-    hello@example.com
-</span>
-
-<span data-noscrape>
-    +49 170 1234567
-</span>
-```
-
-JavaScript
-
 ```ts
 import { Noscrape } from '@noscrape/js';
 
 const noscrape = new Noscrape({
-    apiKey: 'YOUR_API_KEY',
+    apiKey: process.env.NOSCRAPE_API_KEY,
 });
 
-await noscrape.render();
+const response = await noscrape.obfuscate({
+    email: 'hello@example.com',
+    phone: '+49 170 1234567',
+});
 ```
+
+The response contains the obfuscated text, embedded font and font format.
+
+```ts
+{
+    data: {
+        items: {
+            email: '...',
+            phone: '...'
+        }
+    },
+    font: 'AAEAAA...',
+    format: 'otf'
+}
+```
+
+Your application is responsible for rendering the returned values into HTML.
 
 ---
 
@@ -58,19 +63,18 @@ await noscrape.render();
 
 | Option | Default | Description |
 |---------|---------|-------------|
-| endpoint | https://api.noscrape.eu/obfuscate | API endpoint |
+| endpoint | https://api.noscrape.eu/obfuscate | Noscrape API endpoint |
 | apiKey | - | Noscrape API key |
-| selector | `[data-noscrape]` | CSS selector |
 | ignoreWhitespace | true | Ignore whitespace while obfuscating |
-| cache | true | Enable client-side cache |
+| font | - | Use a custom font |
+| cache | true | Reserved for future versions |
 | debug | false | Enable debug logging |
-| font | - | Custom font |
 
-Example
+Example:
 
 ```ts
-new Noscrape({
-    apiKey: 'YOUR_API_KEY',
+const noscrape = new Noscrape({
+    apiKey: process.env.NOSCRAPE_API_KEY,
     debug: true,
 });
 ```
@@ -79,44 +83,60 @@ new Noscrape({
 
 ## API
 
-### render()
+### obfuscate()
 
-Scans the current document for matching elements and replaces their contents with obfuscated text returned by the Noscrape API.
+Obfuscates one or more strings.
 
 ```ts
-await noscrape.render();
+const response = await noscrape.obfuscate({
+    email: 'hello@example.com',
+    phone: '+49 170 1234567',
+});
 ```
 
-Render a specific subtree:
+The object keys remain unchanged and are returned in the response.
+
+---
+
+## Response
 
 ```ts
-await noscrape.render({
-    root: document.querySelector('#content'),
-});
+interface NoscrapeApiResponse {
+    data: {
+        ignoreWhitespace: boolean;
+        items: Record<string, string>;
+    };
+
+    font: string;
+    format: string;
+}
 ```
 
 ---
 
-## Browser Support
+## Supported Environments
 
-- Chrome
-- Edge
-- Firefox
-- Safari
+- Node.js
+- Bun
+- Deno
+- Server-side rendering (SSR)
+- Edge runtimes supporting Fetch API
 
-Requires support for:
+Examples include:
 
-- Fetch API
-- FontFace API
-- ES Modules
+- Next.js
+- Nuxt
+- Astro
+- Express
+- Fastify
+- Hono
+- Custom Node.js applications
 
 ---
 
 ## Documentation
 
 https://noscrape.eu/docs
-
----
 
 ## License
 
