@@ -14,7 +14,6 @@ export class Noscrape {
         this.options = {
             endpoint: options.endpoint ?? this.endpointFromHost(options.host),
             ignoreWhitespace: options.ignoreWhitespace ?? true,
-            cache: options.cache ?? true,
             debug: options.debug ?? false,
         };
 

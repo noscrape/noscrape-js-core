@@ -20,7 +20,7 @@ This SDK is designed for server-side environments such as Node.js, server-side r
 ## Installation
 
 ```bash
-npm install @noscrape/js
+npm install @noscrape/core
 ```
 
 ---
@@ -28,7 +28,7 @@ npm install @noscrape/js
 ## Basic Usage
 
 ```ts
-import { Noscrape } from '@noscrape/js';
+import { Noscrape } from '@noscrape/core';
 
 const noscrape = new Noscrape({
     apiKey: process.env.NOSCRAPE_API_KEY,

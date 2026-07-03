@@ -4,7 +4,6 @@ export interface NoscrapeOptions {
     apiKey?: string;
     font?: string;
     ignoreWhitespace?: boolean;
-    cache?: boolean;
     debug?: boolean;
 }
 
@@ -14,7 +13,6 @@ export interface NoscrapeConfig {
     apiKey?: string;
     font?: string;
     ignoreWhitespace: boolean;
-    cache: boolean;
     debug: boolean;
 }
 
